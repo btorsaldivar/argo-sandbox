@@ -76,10 +76,13 @@ metadata:
 spec:
   rules:
   #- host: "*.foo.com"
-  -  http:
+  #-  http:
+  - host: "ingress-echo.btotest.com"
+    http:
       paths:
       - pathType: Prefix
-        path: "/echo"
+   #     path: "/echo"
+        path: "/"
         backend:
           service:
             name: echo-service

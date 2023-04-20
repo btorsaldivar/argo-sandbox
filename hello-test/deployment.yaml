@@ -83,10 +83,12 @@ metadata:
 spec:
   rules:
   #- host: "*.foo.com"
-  -  http:
+  #-  http:
+  - host: "ingress-test.btotest.com"
+    http:
       paths:
       - pathType: Prefix
-        path: /(.*)
+        path: /
         backend:
           service:
             name: hello-test-service
