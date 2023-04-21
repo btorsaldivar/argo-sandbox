@@ -33,8 +33,8 @@ spec:
           protocol: TCP
         resources:
           limits:
-            cpu: 100m
-            memory: 200Mi
+            cpu: 200m
+            memory: 100Mi
           requests:
             cpu: 50m
             memory: 50Mi
@@ -52,6 +52,7 @@ metadata:
   name: echo-service
   namespace: echo-server
 spec:
+  type: ClusterIP
   ports:
     - name: http-port
       port: 80
@@ -59,6 +60,7 @@ spec:
       protocol: TCP
   selector:
     app: echo-server
+  sessionAffinity: None
 ---
 #############
 ## INGRESS ##
@@ -81,7 +83,6 @@ spec:
     http:
       paths:
       - pathType: Prefix
-   #     path: "/echo"
         path: "/"
         backend:
           service:
