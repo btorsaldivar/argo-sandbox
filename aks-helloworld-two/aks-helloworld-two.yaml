@@ -4,7 +4,7 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: api-org
+  name: aks-helloworld-two
 ---
 ################
 ## DEPLOYMENT ##
@@ -12,38 +12,42 @@ metadata:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: api-org
-  namespace: api-org
+  name: aks-helloworld-two
+  namespace: aks-helloworld-two
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: api-org
+      app: aks-helloworld-two
   template:
     metadata:
       labels:
-        app: api-org
+        app: aks-helloworld-two
     spec:
       containers:
-      - name: api-org
-        image: btoacrsea.azurecr.io/app/api-org:2023.03.31.10-main
-        #image: stefanprodan/podinfo:latest
-        #image: jmalloc/echo-server
+      - image: mcr.microsoft.com/azuredocs/aks-helloworld:v1
         imagePullPolicy: Always
+        name: aks-helloworld-two
         ports:
-        - containerPort: 8080
+        - containerPort: 80
           protocol: TCP
+        env:
+        - name: TITLE
+          value: "AKS Ingress Demo"        
         resources:
           limits:
             cpu: 200m
             memory: 100Mi
           requests:
             cpu: 20m
-        #    memory: 50Mi
+            memory: 20Mi
+      #imagePullSecrets:
+      #- name: acr-secret
+      restartPolicy: Always            
       tolerations:
         - key: "kubernetes.azure.com/scalesetpriority"
           operator: "Exists"
-          effect: "NoSchedule"
+          effect: "NoSchedule"      
 ---
 #############
 ## SERVICE ##
@@ -51,18 +55,17 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: api-org
-  namespace: api-org
+  name: aks-helloworld-two-service
+  namespace: aks-helloworld-two
 spec:
   type: ClusterIP
-#  type: LoadBalancer
   ports:
-    - name: http-port
-      port: 80
-      targetPort: 8080
-      protocol: TCP
+  - name: http
+    port: 80
+    #targetPort: 8080
+    protocol: TCP
   selector:
-    app: api-org
+    app: aks-helloworld-two    
   sessionAffinity: None
 ---
 #############
@@ -71,27 +74,25 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: api-org
-  namespace: api-org
+  name: ingress
+  namespace: aks-helloworld-two
   annotations:
     kubernetes.io/ingress.class: nginx
     #nginx.ingress.kubernetes.io/ssl-redirect: "false"
     #nginx.ingress.kubernetes.io/use-regex: "true"
     #nginx.ingress.kubernetes.io/rewrite-target: /$1
-    #nginx.ingress.kubernetes.io/rewrite-target: /
 spec:
   rules:
   #- host: "*.foo.com"
   #-  http:
-  - host: "ingress-api-org.btotest.com"
+  - host: "ingress-aks2.btotest.com"
     http:
       paths:
-      #- pathType: Prefix
       - pathType: ImplementationSpecific
         path: "/"
         backend:
           service:
-            name: api-org
+            name: aks-helloworld-two-service
             port:
               number: 80
 ---
@@ -101,13 +102,13 @@ spec:
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: api-org-hpa
-  namespace: api-org
+  name: aks-helloworld-two-hpa
+  namespace: aks-helloworld-two
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: api-org
+    name: aks-helloworld-two
   minReplicas: 2
   maxReplicas: 10
   metrics:
