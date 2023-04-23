@@ -25,7 +25,9 @@ spec:
         app: hello-test
     spec:
       containers:
-      - image: btoacrsea.azurecr.io/image_test/k8s-test
+      #- image: btoacrsea.azurecr.io/image_test/k8s-test
+      - image: paulbouwer/hello-kubernetes:1.10.1
+      #- image: stefanprodan/podinfo:latest
         imagePullPolicy: Always
         name: hello-test
         ports:
@@ -82,7 +84,7 @@ spec:
   rules:
   #- host: "*.foo.com"
   #-  http:
-  - host: "ingress-test.btotest.com"
+  - host: "ingress-hello.btotest.com"
     http:
       paths:
       - pathType: Prefix
