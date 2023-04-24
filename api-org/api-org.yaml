@@ -31,14 +31,14 @@ spec:
         #image: jmalloc/echo-server
         imagePullPolicy: Always
         ports:
-        - containerPort: 8080
-          protocol: TCP
+        #- containerPort: 8080
+        #  protocol: TCP
         resources:
-          limits:
-            cpu: 200m
-            memory: 100Mi
+        #  limits:
+        #    cpu: 200m
+        #    memory: 100Mi
           requests:
-            cpu: 20m
+            cpu: 50m
         #    memory: 50Mi
       tolerations:
         - key: "kubernetes.azure.com/scalesetpriority"
@@ -51,15 +51,15 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: api-org
+  name: api-org-service
   namespace: api-org
 spec:
   type: ClusterIP
 #  type: LoadBalancer
   ports:
-    - name: http-port
+    - name: http
       port: 80
-      targetPort: 8080
+      #targetPort: 8080
       protocol: TCP
   selector:
     app: api-org
@@ -94,6 +94,7 @@ spec:
             name: api-org
             port:
               number: 80
+            #  name: http
 ---
 #########
 ## HPA ##
@@ -116,7 +117,7 @@ spec:
       name: cpu
       target:
         type: Utilization
-        averageUtilization: 50
+        averageUtilization: 90
   #- type: Pods
   #  pods:
   #    metric:
