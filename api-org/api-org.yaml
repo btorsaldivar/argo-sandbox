@@ -31,8 +31,9 @@ spec:
         #image: jmalloc/echo-server
         imagePullPolicy: Always
         ports:
-        #- containerPort: 8080
-        #  protocol: TCP
+        - containerPort: 80
+          name: http-pod
+          protocol: TCP
         resources:
         #  limits:
         #    cpu: 200m
@@ -57,9 +58,9 @@ spec:
   type: ClusterIP
 #  type: LoadBalancer
   ports:
-    - name: http
+    - name: http-service
       port: 80
-      #targetPort: 8080
+      targetPort: http-pod
       protocol: TCP
   selector:
     app: api-org
@@ -91,10 +92,9 @@ spec:
         path: "/"
         backend:
           service:
-            name: api-org
+            name: api-org-service
             port:
               number: 80
-            #  name: http
 ---
 #########
 ## HPA ##
