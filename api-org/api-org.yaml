@@ -26,9 +26,8 @@ spec:
     spec:
       containers:
       - name: api-org
-        image: btoacrsea.azurecr.io/app/api-org:2023.03.31.10-main
-        #image: stefanprodan/podinfo:latest
-        #image: jmalloc/echo-server
+        image: btoacrsea.azurecr.io/app/api-org:latest
+        #image: btoacrsea.azurecr.io/app/api-org:2023.03.31.10-main
         imagePullPolicy: Always
         ports:
         - containerPort: 80
