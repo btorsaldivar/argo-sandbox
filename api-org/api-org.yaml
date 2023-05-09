@@ -55,7 +55,6 @@ metadata:
   namespace: api-org
 spec:
   type: ClusterIP
-#  type: LoadBalancer
   ports:
     - name: http-service
       port: 80
@@ -79,16 +78,33 @@ metadata:
     #nginx.ingress.kubernetes.io/use-regex: "true"
     #nginx.ingress.kubernetes.io/rewrite-target: /$1
     #nginx.ingress.kubernetes.io/rewrite-target: /
+#spec:
+#  rules:
+#  #- host: "*.foo.com"
+#  #-  http:
+#  - host: "ingress-api-org.btotest.com"
+#    http:
+#      paths:
+#      #- pathType: Prefix
+#      - pathType: ImplementationSpecific
+#        path: "/"
+#        backend:
+#          service:
+#            name: api-org-service
+#            port:
+#              number: 80
 spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - ingress-api-org.btotest.com
+    secretName: ingress-tls-csi
   rules:
-  #- host: "*.foo.com"
-  #-  http:
-  - host: "ingress-api-org.btotest.com"
+  - host: ingress-api-org.btotest.com
     http:
       paths:
-      #- pathType: Prefix
-      - pathType: ImplementationSpecific
-        path: "/"
+      - path: /
+        pathType: ImplementationSpecific
         backend:
           service:
             name: api-org-service
