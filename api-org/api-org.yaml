@@ -29,10 +29,26 @@ spec:
         image: btoacrsea.azurecr.io/app/api-org:2023.05.09.10-main
         #image: btoacrsea.azurecr.io/app/api-org:2023.03.31.10-main
         imagePullPolicy: Always
+
         ports:
         - containerPort: 80
           name: http-pod
           protocol: TCP
+
+        livenessProbe:
+          httpGet:
+            path: /ping
+            port: http-pod
+          failureThreshold: 1
+          periodSeconds: 10
+
+        startupProbe:
+          httpGet:
+            path: /version
+            port: http-pod
+          failureThreshold: 30
+          periodSeconds: 10
+
         resources:
         #  limits:
         #    cpu: 200m
@@ -40,10 +56,12 @@ spec:
           requests:
             cpu: 50m
         #    memory: 50Mi
+
         volumeMounts:
         - name: secrets-store-inline
           mountPath: "/mnt/secrets-store"
           readOnly: true
+
       volumes:
       - name: secrets-store-inline
         csi:
@@ -51,6 +69,7 @@ spec:
           readOnly: true
           volumeAttributes:
             secretProviderClass: "azure-tls"
+
       tolerations:
         - key: "kubernetes.azure.com/scalesetpriority"
           operator: "Exists"
