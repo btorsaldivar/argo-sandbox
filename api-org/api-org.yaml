@@ -115,9 +115,9 @@ spec:
       key: tls.crt
   parameters:
     usePodIdentity: "false"
-    useVMManagedIdentity: "false"
+    useVMManagedIdentity: "true"
     #userAssignedIdentityID: <client id>
-    userAssignedIdentityID: "b23166db-cc45-4c5f-8f5b-4a7c8d920132"
+    #userAssignedIdentityID: "b23166db-cc45-4c5f-8f5b-4a7c8d920132"
     keyvaultName: k8svaultci                 # the name of the AKV instance
     objects: |
       array:
