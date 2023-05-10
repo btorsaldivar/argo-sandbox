@@ -15,7 +15,7 @@ metadata:
   name: api-org
   namespace: api-org
 spec:
-  replicas: 2
+  #replicas: 2
   selector:
     matchLabels:
       app: api-org
@@ -154,7 +154,7 @@ spec:
     apiVersion: apps/v1
     kind: Deployment
     name: api-org
-  #minReplicas: 2
+  minReplicas: 2
   maxReplicas: 10
   metrics:
   - type: Resource
