@@ -67,23 +67,46 @@ spec:
             cpu: 50m
         #    memory: 50Mi
 
-        volumeMounts:
-        - name: secrets-store-inline
-          mountPath: "/mnt/secrets-store"
-          readOnly: true
+#        volumeMounts:
+#        - name: secrets-store-inline
+#          mountPath: "/mnt/secrets-store"
+#          readOnly: true
 
-      volumes:
-      - name: secrets-store-inline
-        csi:
-          driver: secrets-store.csi.k8s.io
-          readOnly: true
-          volumeAttributes:
-            secretProviderClass: "azure-tls"
+#      volumes:
+#      - name: secrets-store-inline
+#        csi:
+#          driver: secrets-store.csi.k8s.io
+#          readOnly: true
+#          volumeAttributes:
+#            secretProviderClass: "azure-tls"
 
       tolerations:
-        - key: "kubernetes.azure.com/scalesetpriority"
-          operator: "Exists"
-          effect: "NoSchedule"
+        #- key: "kubernetes.azure.com/scalesetpriority"
+        #  operator: "Exists"
+        #  effect: "NoSchedule"
+        - operator: "Exists"        
+
+      affinity:
+      # An example of preferred pod anti-affinity, weight is in the range 1-100
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - api-org
+#                - key: app.kubernetes.io/instance
+#                  operator: In
+#                  values:
+#                  - ingress-nginx
+#                - key: app.kubernetes.io/component
+#                  operator: In
+#                  values:
+#                  - controller
+              topologyKey: pod-template-hash
 ---
 #############
 ## SERVICE ##
@@ -126,35 +149,35 @@ metadata:
 ###########################
 ## SECRET PROVIDER CLASS ##
 ###########################
-apiVersion: secrets-store.csi.x-k8s.io/v1
-kind: SecretProviderClass
-metadata:
-  name: azure-tls
-  namespace: api-org
-spec:
-  provider: azure
-  secretObjects:                            # secretObjects defines the desired state of synced K8s secret objects
-  - secretName: ingress-tls-csi
-    type: kubernetes.io/tls
-    data: 
-    - objectName: btotest-com
-      key: tls.key
-    - objectName: btotest-com
-      key: tls.crt
-  parameters:
-    usePodIdentity: "false"
-    useVMManagedIdentity: "false"
-    #userAssignedIdentityID: <client id>
-    #userAssignedIdentityID: "70a8784f-e0ca-4f90-a8c8-c2782d00f53d"
-    #clientID: 70a8784f-e0ca-4f90-a8c8-c2782d00f53d       # ci-k8s-kubelet, use workload-identity credential
-    clientID: 649bfd71-e440-437f-bce3-2c88386190a0        # ci-k8s-aks, use workload-identity credential
-    keyvaultName: k8svaultci                              # Name of the key vault instance
-    objects: |
-      array:
-        - |
-          objectName: btotest-com
-          objectType: secret
-    tenantId: bf5991a1-f344-4aec-9fb3-455ff1e2c7a6        # The tenant ID of the key vault
+#apiVersion: secrets-store.csi.x-k8s.io/v1
+#kind: SecretProviderClass
+#metadata:
+#  name: azure-tls
+#  namespace: api-org
+#spec:
+#  provider: azure
+#  secretObjects:                            # secretObjects defines the desired state of synced K8s secret objects
+#  - secretName: ingress-tls-csi
+#    type: kubernetes.io/tls
+#    data: 
+#    - objectName: btotest-com
+#      key: tls.key
+#    - objectName: btotest-com
+#      key: tls.crt
+#  parameters:
+#    usePodIdentity: "false"
+#    useVMManagedIdentity: "false"
+#    #userAssignedIdentityID: <client id>
+#    #userAssignedIdentityID: "70a8784f-e0ca-4f90-a8c8-c2782d00f53d"
+#    #clientID: 70a8784f-e0ca-4f90-a8c8-c2782d00f53d       # ci-k8s-kubelet, use workload-identity credential
+#    clientID: 649bfd71-e440-437f-bce3-2c88386190a0        # ci-k8s-aks, use workload-identity credential
+#    keyvaultName: k8svaultci                              # Name of the key vault instance
+#    objects: |
+#      array:
+#        - |
+#          objectName: btotest-com
+#          objectType: secret
+#    tenantId: bf5991a1-f344-4aec-9fb3-455ff1e2c7a6        # The tenant ID of the key vault
 ---
 #############
 ## INGRESS ##
@@ -166,7 +189,7 @@ metadata:
   namespace: api-org
   annotations:
     kubernetes.io/ingress.class: nginx
-    #nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
     #nginx.ingress.kubernetes.io/use-regex: "true"
     #nginx.ingress.kubernetes.io/rewrite-target: /$1
     #nginx.ingress.kubernetes.io/rewrite-target: /
@@ -190,7 +213,7 @@ spec:
   tls:
   - hosts:
     - ingress-api-org.btotest.com
-    secretName: ingress-tls-csi
+  #  secretName: ingress-tls-csi
   rules:
   - host: ingress-api-org.btotest.com
     http:
@@ -216,7 +239,7 @@ spec:
     apiVersion: apps/v1
     kind: Deployment
     name: api-org
-  minReplicas: 2
+  minReplicas: 4
   maxReplicas: 10
   metrics:
   - type: Resource
