@@ -14,6 +14,8 @@ kind: Deployment
 metadata:
   name: api-org
   namespace: api-org
+  labels:
+    azure.workload.identity/use: "true"
 spec:
   #replicas: 2
   selector:
@@ -24,11 +26,18 @@ spec:
       labels:
         app: api-org
     spec:
+      serviceAccountName: workload-identity-sa          # Workload Identity Service Account Name
       containers:
       - name: api-org
-        image: btoacrsea.azurecr.io/app/api-org:2023.05.09.10-main
+        image: btoacrsea.azurecr.io/app/api-org:2023.05.11.1-main
         #image: btoacrsea.azurecr.io/app/api-org:2023.03.31.10-main
         imagePullPolicy: Always
+
+  #      env:
+  #        - name: KEYVAULT_URL
+  #          value: https://k8svaultci.vault.azure.net/
+  #        - name: TLSCSI
+  #          value: btotest-com
 
         ports:
         - containerPort: 80
@@ -86,14 +95,33 @@ metadata:
   namespace: api-org
 spec:
   type: ClusterIP
+  selector:
+    app: api-org
+  sessionAffinity: None
   ports:
     - name: http-service
       port: 80
       targetPort: http-pod
       protocol: TCP
-  selector:
-    app: api-org
-  sessionAffinity: None
+#spec:
+#  type: ExternalName
+#  externalName: api-org-service.api-org.svc.cluster.local
+
+---
+#####################
+## SERVICE ACCOUNT ##
+#####################
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  annotations:
+    # azure.workload.identity/client-id: 649bfd71-e440-437f-bce3-2c88386190a0        # ci-k8s-aks
+    # azure.workload.identity/tenant-id                           # Default: AZURE_TENANT_ID environment variable extracted from azure-wi-webhook-config ConfigMap.
+    # azure.workload.identity/service-account-token-expiration    # Default: 3600. Supported range is 3600-86400.
+  labels:
+    azure.workload.identity/use: "true"
+  name: workload-identity-sa
+  namespace: api-org
 ---
 ###########################
 ## SECRET PROVIDER CLASS ##
@@ -115,16 +143,18 @@ spec:
       key: tls.crt
   parameters:
     usePodIdentity: "false"
-    useVMManagedIdentity: "true"
+    useVMManagedIdentity: "false"
     #userAssignedIdentityID: <client id>
-    #userAssignedIdentityID: "b23166db-cc45-4c5f-8f5b-4a7c8d920132"
-    keyvaultName: k8svaultci                 # the name of the AKV instance
+    #userAssignedIdentityID: "70a8784f-e0ca-4f90-a8c8-c2782d00f53d"
+    #clientID: 70a8784f-e0ca-4f90-a8c8-c2782d00f53d       # ci-k8s-kubelet, use workload-identity credential
+    clientID: 649bfd71-e440-437f-bce3-2c88386190a0        # ci-k8s-aks, use workload-identity credential
+    keyvaultName: k8svaultci                              # Name of the key vault instance
     objects: |
       array:
         - |
           objectName: btotest-com
           objectType: secret
-    tenantId: bf5991a1-f344-4aec-9fb3-455ff1e2c7a6
+    tenantId: bf5991a1-f344-4aec-9fb3-455ff1e2c7a6        # The tenant ID of the key vault
 ---
 #############
 ## INGRESS ##
@@ -156,7 +186,7 @@ metadata:
 #            port:
 #              number: 80
 spec:
-  ingressClassName: nginx
+  #ingressClassName: nginx
   tls:
   - hosts:
     - ingress-api-org.btotest.com
@@ -173,9 +203,9 @@ spec:
             port:
               number: 80
 ---
-#########
-## HPA ##
-#########
+####################################
+## HPA: Horizontal Pod Autoscaler ##
+####################################
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
